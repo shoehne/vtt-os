@@ -9,12 +9,12 @@ ISO_GRUB := $(ISO_BOOT)/grub
 ISO_IMAGE := vtt-os.iso
 
 # Kernel Binaries
-DEBUG-AMD64-BIN := bin/Debug-x86_64/kernel.bin
-RELEASE-AMD64-BIN := bin/Release-x86_64/kernel.bin
+DEBUG_AMD64_BIN := bin/debug-x86_64/kernel.bin
+RELEASE_AMD64_BIN := bin/release-x86_64/kernel.bin
 
 # Build targets
 # Default
-all: debug
+all: debug-amd64
 
 # Debug x86_64
 debug-amd64: $(DEBUG_AMD64_BIN)
@@ -33,11 +33,11 @@ release-amd64: $(RELEASE_AMD64_BIN)
 # Build Kernel Binaries
 # Debug x86_64
 $(DEBUG_AMD64_BIN):
-	@$(MAKE) -C $(PREMAKE_DIR) config=Debug CC=$(CC)
+	@$(MAKE) -C $(PREMAKE_DIR) config=debug CC=$(CC)
 
 # Release x86_64
 $(RELEASE_AMD64_BIN):
-	@$(MAKE) -C $(PREMAKE_DIR) config=Release CC=$(CC)
+	@$(MAKE) -C $(PREMAKE_DIR) config=release CC=$(CC)
 
 # Run QEMU
 run-debug-amd64: debug-amd64

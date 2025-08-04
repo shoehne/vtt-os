@@ -1,14 +1,15 @@
 workspace 'Vtt-Kernel'
     configurations {
-        'Debug',
-        'Release',
+        'debug',
+        'release',
     }
     location 'build/'
 
-    project 'Vtt-Kernel'
+    project 'Vtt-Kernel-x86_64'
         kind 'Makefile'
         language 'C'
         toolset 'gcc'
+        architecture 'x86_64'
         buildoptions {
             '--ffreestanding',
             '-m64',
