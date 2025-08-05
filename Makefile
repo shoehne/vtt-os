@@ -6,11 +6,11 @@ PREMAKE_DIR := build
 ISO_DIR := iso
 ISO_BOOT := $(ISO_DIR)/boot
 ISO_GRUB := $(ISO_BOOT)/grub
-ISO_IMAGE := vtt-os.iso
+ISO_IMAGE := $(ISO_DIR)/vtt-os.iso
 
 # Kernel Binaries
-DEBUG_AMD64_BIN := bin/debug-x86_64/kernel.bin
-RELEASE_AMD64_BIN := bin/release-x86_64/kernel.bin
+DEBUG_AMD64_BIN := ./bin/debug-x86_64/Vtt-Kernel-x86_64.bin
+RELEASE_AMD64_BIN := ./bin/release-x86_64/Vtt-Kernel-x86_64.bin
 
 # Build targets
 # Default
@@ -20,14 +20,14 @@ all: debug-amd64
 debug-amd64: $(DEBUG_AMD64_BIN)
 	@mkdir -p $(ISO_GRUB)
 	@cp $(DEBUG_AMD64_BIN) $(ISO_BOOT)/kernel.bin
-	@cp $(ISO_GRUB)/grub.cfg $(ISO_GRUB)/grub.cfg
+	#@cp $(ISO_GRUB)/grub.cfg $(ISO_GRUB)/grub.cfg
 	@grub-mkrescue -o $(ISO_IMAGE) $(ISO_DIR)
 
 # Release x86_64
 release-amd64: $(RELEASE_AMD64_BIN)
 	@mkdir -p $(ISO_GRUB)
 	@cp $(RELEASE_AMD64_BIN) $(ISO_BOOT)/kernel.bin
-	@cp $(ISO_GRUB)/grub.cfg $(ISO_GRUB)/grub.cfg
+	#@cp $(ISO_GRUB)/grub.cfg $(ISO_GRUB)/grub.cfg
 	@grub-mkrescue -o $(ISO_IMAGE) $(ISO_DIR)
 
 # Build Kernel Binaries
@@ -50,3 +50,5 @@ run-release-amd64: release-amd64
 clean:
 	@$(MAKE) -C $(PREMAKE_DIR) clean
 	@rm -rf $(ISO_DIR)/boot/kernel.bin $(ISO_IMAGE)
+	@echo Cleaning build artifacts
+	@if exist build (rmdir /s /q build)
