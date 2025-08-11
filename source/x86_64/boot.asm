@@ -43,8 +43,8 @@ stack_top:
 ; - object: indicates a data object (e.g. a variable)
 ; - notype: indicates the symbol has no specific type
 section .text
-global start
-start:
+global Start
+Start:
     ; The bootloader loaded into 32-bit protected mode on a x86 machine. Interrupts are disabled.
     ; Paging is disabled and the processor is as defined in the Multiboot standard. The kernel now
     ; is in full control of the CPU and is only able to make use of hardware features and any code
@@ -59,6 +59,8 @@ start:
     ; opposite way). The source is prefixed with '$' and the destination with '%'.
     mov rsp, stack_top
 
+    call CheckCpuid
+
     ; This is a good place to initialise crucial processor state before the high-level kernel
     ; is entered. As of this point the processor is not fully initialised yet: Features such
     ; as floating point instructions and instruction set extensions are not available yet. The
@@ -70,7 +72,7 @@ start:
     ; Originally the stack was 16-byte aligned above and a multiple of 16-bytes have been 
     ; pushed to the stack since (0 bytes so far). The alignment has thus been preserved the 
     ; call is well defined.
-    call kernel_main
+    call KernelMain
 
     cli
 
@@ -79,7 +81,55 @@ start:
     jmp .hang
 
 global kernel_main
-kernel_main:
+KernelMain:
     ; Print 'OK' to VGA text buffer
     mov dword [0xb8000], 0x2f4b2f4f
     ret
+
+; Check if CPUID is supported
+%include "../source/x86_64/eflags.asm" 
+CheckCpuid:
+    pushfd ; Push the flags register onto the stack
+    pop eax ; Pop the flags register into the eax register which is a 32-bit subregister
+            ; of the rax 64-bit general purpose register
+
+    ; The mov instruction copies a value from one memory register into another.
+    ; The flags register stored in the eax register is copied into the ecx register for 
+    ; comparison with the flipped value in eax (flipping the value of the 21st bit by
+    ; XOR with Eflags.cpu_id).
+    mov ecx, eax
+    xor eax, Eflags.cpu_id
+
+    ; Push eax back onto the stack, pop the value pushed onto the stack into the flags
+    ; register. Then load the flags register into the stack again and store the topmost 
+    ; stack entry in the eax register again. To restore the flags register to its original 
+    ; state (we only want to check if the CPUID bit is flippable but don't want to 
+    ; actually store its flipped value in the flags register) the value in the ecx register
+    ; (the original value of the CPUID bit in the flags register) gets pushed onto the 
+    ; stack and then the stack entry gets popped into the flags register again. After that 
+    ; the values in ecx and eax can be compared and if they're equal we know that CPUID is not
+    ; supported on the current system.
+    push eax
+    popfd
+
+    pushfd
+    pop eax
+
+    push ecx
+    popfd
+
+    cmp eax, ecx
+    je .no_cpu_id
+    ret
+.no_cpu_id:
+    mov byte al, "C"
+    jmp Error
+
+Error:
+    ; Print "ERR: X" where X is the "error byte" stored in al
+    mov dword [0xb8000], 0x04520445
+    mov dword [0xb8004], 0x044f0452
+    mov dword [0xb8008], 0x04300452
+    mov word [0xb800b], 0x0020
+    mov byte [0xb800c], al
+    hlt
